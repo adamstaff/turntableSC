@@ -3,19 +3,12 @@ Server.default.options.inDevice_(3);
 Server.default.options.outDevice_(4);
 s.boot;
 
-//PANIC
+//unload buffers
 Buffer.freeAll;
 
 //read a sample
 b = Buffer.read(s, "/Users/adam/Desktop/basement/01.mp3", action: postln("done"));
 b.query;
-//unload a sample
-r.stop;
-r.run(false);
-r.run;
-r.free;
-b.free;
-Synth.stop(r);
 
 //synthdef
 (
@@ -45,8 +38,8 @@ r = SynthDef("out", {
 )
 
 //testing
-r.set("rate", 0.5);
-r.set("rate",4);
+r.set("rate", 0.0);
+r.set("rate",1);
 r.set("rate", -2);
 r.set(\t_trigger,1);
 r.set(\t_poll,1);
