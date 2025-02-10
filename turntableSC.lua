@@ -42,7 +42,6 @@ function init()
   norns.enc.accel(2,-2)
 
 	-- clocks setup
-  redraw_clock_id = clock.run(redraw_clock)
   play_clock_id = clock.run(play_clock)
   
   -- turntable variables
@@ -130,10 +129,10 @@ function play_clock()
     clock.sleep(1/240)
     local get_to = tt.rateRate * tt.pitch * tt.mismatch * tt.destinationRate + tt.nudgeRate
     if tt.playRate ~= get_to then
-      if tt.playRate < 0.01 and tt.playRate > -0.01 then 
+      if tt.playRate < 0.01 and tt.playRate > -0.01 then
         tt.playRate = 0 
       else
-		engine.rate = tt.playRate
+		  engine.rate = tt.playRate
       end
     end
   end
@@ -228,7 +227,6 @@ function key(k, z)
 end
 
 function cleanup() --------------- cleanup() is automatically called on script close
-  clock.cancel(redraw_clock_id)
   clock.cancel(play_clock_id)
 --  clock.cancel(sync_clock_id)
 end

@@ -1,8 +1,11 @@
 Engine_turntable : CroneEngine {
 
 	var params;
-
+	// we need to make sure the server is running before asking it to do anything
 	alloc { // allocate memory to the following:
+
+    var s = Server.default;
+    var b = Buffer.new(s, 0, 2, 0);
 
 		// add SynthDefs
 		SynthDef("turntable", {
@@ -35,7 +38,6 @@ Engine_turntable : CroneEngine {
 	//   to store parameter values, initialized to defaults
 	// for user control
 	params = Dictionary.newFrom([
-		\turntBuf, {},
 		\rate, 0.0,
 		\stiffness, 2,
 		\doloop, 1
@@ -59,29 +61,29 @@ Engine_turntable : CroneEngine {
 	// i.e. engine.fileload(filename,number_of_samples)
 	this.addCommand("loadfile","si", { arg msg;
 	    // empty buffer
-	   turntBuf.free;
+	   b.free;
 	    // post a friendly message
 	    postln("loading "++msg[2]++" samples of "++msg[1]);
 	    // write to the buffer
-    	turntBuff = Buffer.read(context.server,msg[1],numFrames:msg[2]);
+    	b = Buffer.read(context.server,msg[1],numFrames:msg[2]);
 	    // set correct buffer number & stop turntable
-	    turntable.set(
+	    Synth.set(
 	        \rate, 0.0, \goto, 0.0, \t_trigger, 1
-	    );;
-	};
+	    )
+	});
 	
 	//command to poll the position
 	this.addCommand("pos_poll","f", { arg msg;
-	    turntable.set(
+	    Synth.set(
 	    	\t_poll,1
 	    )
-	};
+	});
 
 	//command to poll the position - decimal position
 	this.addCommand("goto","f", { arg msg;
-	    turntable.set(
+	    Synth.set(
 	    	\goto,msg
 	    )
-	};
-
+	})
+	}
 }
