@@ -1,6 +1,6 @@
 //laptop stuff
-Server.default.options.inDevice_(1);
-Server.default.options.outDevice_(2);
+Server.default.options.inDevice_(3);
+Server.default.options.outDevice_(4);
 s.boot;
 
 //PANIC
@@ -20,8 +20,9 @@ Synth.stop(r);
 //synthdef
 (
 r = SynthDef("out", {
-	arg out=0, rate = 1, doloop = 1.0,
-	t_trigger, stiffness = 1.1, goto = 0;
+	arg bufNum = 0, out=0,
+	t_trigger, t_poll,
+	rate = 1, doloop = 1.0,	stiffness = 1.1, goto = 0;
 	var playback, playhead, position, position_deci;
 	playhead = Phasor.ar(
 		trig: t_trigger,
@@ -38,7 +39,7 @@ r = SynthDef("out", {
 		phase: position,
 		loop: doloop;
 	);
-	position_deci.poll(1);
+	Poll.kr(t_poll, position_deci, "position");
 	Out.ar(out, playback);
 }).play;
 )
@@ -48,3 +49,4 @@ r.set("rate", 0.5);
 r.set("rate",4);
 r.set("rate", -2);
 r.set(\t_trigger,1);
+r.set(\t_poll,1);
