@@ -37,6 +37,7 @@ Engine_turntable : CroneEngine {
 	params = Dictionary.newFrom([
 		\turntBuf, {},
 		\rate, 0.0,
+		\stiffness, 2,
 		\doloop, 1
 		;
 	]);
@@ -53,9 +54,9 @@ Engine_turntable : CroneEngine {
 		});
 	});
 	
-  // command to load file into buffer
-  // "loadfile" will be name of Lua file parameter
-  // i.e. engine.loadfile(filename,number_of_samples)
+	// command to load file into buffer
+	// "fileload" will be name of Lua file parameter
+	// i.e. engine.fileload(filename,number_of_samples)
 	this.addCommand("loadfile","si", { arg msg;
 	    // empty buffer
 	   turntBuf.free;
