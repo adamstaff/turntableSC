@@ -1,6 +1,6 @@
 //laptop stuff
 Server.default.options.inDevice_(3);
-Server.default.options.outDevice_(4);
+Server.default.options.outDevice_(3);
 s.boot;
 
 //unload buffers
