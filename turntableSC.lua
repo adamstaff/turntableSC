@@ -26,6 +26,7 @@
 -- norns stereo inputs
 --
 
+engine.name = "turntable"
 util = require "util"
 fileselect = require "fileselect"
 
@@ -42,7 +43,7 @@ function init()
   norns.enc.accel(2,-2)
 
 	-- clocks setup
-  redraw_clock_id = clock.run(redraw_clock)
+  --redraw_clock_id = clock.run(redraw_clock)
   play_clock_id = clock.run(play_clock)
   
   -- turntable variables
@@ -63,6 +64,16 @@ function init()
   tt.stickerHole = 1
   tt.mismatch = 1
   tt.rateRate = 1
+  
+  --waveform variables
+  waveform = {}
+  waveform.isLoaded = false
+  waveform.samples = {}
+  waveform.rate = 48000
+  waveform.position = 0
+  waveform.length = 0
+  waveform.lengthInS = 0
+  waveform.zoom = 1
   
   heldKeys = {}
   
@@ -86,6 +97,7 @@ function load_file(file)
     waveform.lengthInS = length * ((rate / 48000) / rate)
     print("sample length is "..waveform.lengthInS)
     print("sample rate is "..rate)
+    print("file is"..file)
     waveform.rate = rate
     waveform.length = length
     tt.rateRate = rate / 48000
@@ -105,13 +117,19 @@ end
 
 function drawUI()
   screen.level(15)
-  screen.move(64,32)
+  screen.move(64,22)
   screen.text(tt.playRate)
+  screen.level(15)
+  screen.move(64,32)
+  if playing then
+  screen.text("playing")
+  else screen.text("stopped") end
 end
 
 function redraw()
   if not weLoading then
   	if screenDirty or tt.playRate > 0.001 or tt.playRate < 0.001 then
+  	  print("drawing screen")
 			screen.clear()
 			drawBackground()
 			drawUI()
@@ -129,11 +147,14 @@ function play_clock()
   while true do
     clock.sleep(1/240)
     local get_to = tt.rateRate * tt.pitch * tt.mismatch * tt.destinationRate + tt.nudgeRate
+    --print("getto is "..get_to)
+    local how_far = (get_to - tt.playRate) * tt.inertia
+    tt.playRate = tt.playRate + how_far / 4
     if tt.playRate ~= get_to then
       if tt.playRate < 0.01 and tt.playRate > -0.01 then 
         tt.playRate = 0 
       else
-		engine.rate = tt.playRate
+		    engine.prate(tt.playRate)
       end
     end
   end
@@ -228,7 +249,7 @@ function key(k, z)
 end
 
 function cleanup() --------------- cleanup() is automatically called on script close
-  clock.cancel(redraw_clock_id)
+  --clock.cancel(redraw_clock_id)
   clock.cancel(play_clock_id)
 --  clock.cancel(sync_clock_id)
 end
