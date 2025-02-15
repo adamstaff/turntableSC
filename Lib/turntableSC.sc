@@ -1,23 +1,25 @@
 Engine_turntable : CroneEngine {
 
 	var params;
+	// ( server, frames, channels, bufnum )
+	var turntable; // the player variable
+
 	// we need to make sure the server is running before asking it to do anything
 	alloc { // allocate memory to the following:
 
-		    var s = Server.default;
-    // ( server, frames, channels, bufnum )
+    var s = Server.local;
     var b = Buffer.new(s, 0, 2, 0);
-	var turntable;
+
+    Server.default.sync;
 
   	// add SynthDefs
 		SynthDef("turntable", {
-			arg bufNum = 0, out=0,
-			t_trigger, t_poll,
+			arg t_trigger, t_poll,
 			prate, doloop,	stiffness, goto;
 			var playback, playhead, position, position_deci;
 			playhead = Phasor.ar(
 				trig: t_trigger,
-				rate: prate,
+				rate: 0.5,
 				start: 0,
 				end: BufFrames.kr(b.bufnum),
 				resetPos: goto
@@ -25,18 +27,16 @@ Engine_turntable : CroneEngine {
 			position = Lag3.ar(playhead, stiffness);
 			position_deci = position / BufFrames.kr(b.bufnum);
 			playback = BufRd.ar(
-				numChannels: 2,
-				bufnum: 0,
+				numChannels: b.numChannels,
+				bufnum: b.bufnum,
 				phase: position,
 				loop: doloop;
 			);
 			Poll.kr(t_poll, position_deci, "position");
-			Out.ar(out, playback);
+			Out.ar(0, playback);
 		}).add;
-		
-		turntable = Synth("turntable");
-
-	Server.default.sync;
+	
+	turntable = Synth("turntable");
 		
 	// let's create an Dictionary (an unordered associative collection)
 	//   to store parameter values, initialized to defaults
@@ -59,7 +59,7 @@ Engine_turntable : CroneEngine {
 	// and add a command for each one, which updates corresponding value:
 	params.keysDo({ arg key;
 		this.addCommand(key, "f", { arg msg;
-			params[key] = msg[1]
+		  turntable.set([key], msg[1]);
 		});
 	});
 	
@@ -74,9 +74,9 @@ Engine_turntable : CroneEngine {
 	    // write to the buffer
     	b = Buffer.read(context.server,msg[1],numFrames:msg[2]);
 	    // set correct buffer number & stop turntable
-	    //Synth.set(
-	   //     \rate, 0.0, \goto, 0.0, \t_trigger, 1
-	   // )
+	    turntable.set(
+	        \rate, 0.0, \goto, 0.0, \t_trigger, 1
+	    )
 	});
 	
 	// end commands	
