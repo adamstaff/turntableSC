@@ -164,7 +164,6 @@ function init()
   tt.stickerHole = 1
   tt.mismatch = 1
   tt.rateRate = 1
-  tt.flipflop = true
   tt.crowRate = 0
   
   --waveform variables
@@ -228,6 +227,7 @@ function setFader(x)
 	audio.level_adc(y2)
 end
 
+--[[
 function load_file(file)
   if file and file ~= "cancel" then
     print('loading file '..file)
@@ -250,6 +250,7 @@ function load_file(file)
   heldKeys[1] = false
   screenDirty = true
 end
+--]]
 
 function drawBackground()
   screen.aa(1)
