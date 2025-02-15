@@ -22,7 +22,7 @@ Engine_turntable : CroneEngine {
 			var playback, playhead, position, position_deci;
 			playhead = Phasor.ar(
 				trig: t_trigger,
-				rate: 0.5,
+				rate: prate,
 				start: 0,
 				end: BufFrames.kr(0),
 				resetPos: goto
@@ -38,13 +38,16 @@ Engine_turntable : CroneEngine {
 			Poll.kr(t_poll, position_deci, "position");
 			Out.ar(0, playback);
 		}).add;
+		
+		
+		Server.default.sync;
 	
   // let's create an Dictionary (an unordered associative collection)
 	//   to store parameter values, initialized to defaults
 	// for user control
 	params = Dictionary.newFrom([
 		\prate, 0.5,
-		\stiffness, 2,
+		\stiffness, 0.5,
 		\doloop, 1,
 		\goto, 0.0,
 		\t_poll, 0,
@@ -52,7 +55,7 @@ Engine_turntable : CroneEngine {
 		;
 	]);
 	
-	turntable = Synth.new("turntable");
+	turntable = Synth("turntable", target:context.xg);
 
 	// "Commands" are how the Lua interpreter controls the engine.
 	// The format string is analogous to an OSC message format string,
@@ -63,8 +66,8 @@ Engine_turntable : CroneEngine {
 	params.keysDo({ arg key;
 		this.addCommand(key, "f", { arg msg;
 		  //postln("setting command " ++ key ++ " to " ++ msg[1]);
-		  //params[key] = msg[1];
-		  turntable.set(params[key], msg[1]);
+		  params[key] = msg[1];
+		  turntable.set(key, msg[1]);
 		});
 	});
 	
