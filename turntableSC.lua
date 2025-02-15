@@ -30,8 +30,6 @@ engine.name = "turntable"
 util = require "util"
 fileselect = require "fileselect"
 
-
---params
 function init_params()
 	-- Turntable controls
   params:add_separator('Turntable Controls')
@@ -132,8 +130,6 @@ function init_params()
   params:bang()
 end
 
-
-
 function init()
 
   weIniting = true
@@ -168,7 +164,8 @@ function init()
   tt.stickerHole = 1
   tt.mismatch = 1
   tt.rateRate = 1
-  tt.holeSize = 1
+  tt.flipflop = true
+  tt.crowRate = 0
   
   --waveform variables
   waveform = {}
@@ -188,7 +185,7 @@ function init()
   crow.input[2].mode("stream", 0.1)
   
   init_params()
-  
+
   playing = false
   paused = false
   weLoading = false
@@ -196,8 +193,19 @@ function init()
   
   pausedHand = 15
   
-  --uncomment to auto load a file
-  --load_file(_path.audio..'/something.wav', 0, 0, -1, 0, 1)
+  -- poll
+  position_poll = poll.set("get_position")
+  position_poll.callback = function(val)
+		pos_handler(val)
+  end
+  position_poll.time = 1/10
+  position_poll:start()
+  
+end
+
+function pos_handler(val)
+  print("got a value here: "..val)
+  waveform.position = val
 end
 
 function setFader(x)
@@ -416,28 +424,23 @@ function drawUI()
   screen.text(osdate)
   --time elapsed / remaining
   --if waveform.isLoaded and #waveform.samples > 0 and waveform.rate > 0 then
-    --local remaining = util.s_to_hms(math.floor((((#waveform.samples - waveform.position) / #waveform.samples) * waveform.lengthInS)))
+  --local remaining = util.s_to_hms(math.floor((((#waveform.samples - waveform.position) / #waveform.samples) * waveform.lengthInS)))
     --remaining = remaining:sub(3,7)
-    --screen.text_rotate(128,26,"-"..remaining, 270)
+
+  screen.text_rotate(128,26,"-"..waveform.position, 270)
   --end
+  screen.level(15)
+  screen.move(0,60)
+  screen.text(tt.playRate)
 end
 
-function drawUI()
-  screen.level(15)
-  screen.move(64,22)
-  screen.text(tt.playRate)
-  screen.level(15)
-  screen.move(64,32)
-  if playing then
-  screen.text("playing")
-  else screen.text("stopped") end
-end
 
 function redraw()
   if not weLoading then
   	if screenDirty or tt.playRate > 0.001 or tt.playRate < 0.001 then
 			screen.clear()
 			drawBackground()
+--			drawWaveform()
 			drawUI()
 			screen.fill()
 			tt.position = tt.position + tt.playRate * ((tt.rpm/60)*360)/60

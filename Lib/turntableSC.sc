@@ -1,8 +1,9 @@
 Engine_turntable : CroneEngine {
 
-	  var <params;
-    var <turntable;
-    var <tBuff;
+	  var params;
+    var turntable;
+    var tBuff;
+    var position_deci;
     
     *new { arg context, doneCallback;
         ^super.new(context, doneCallback);
@@ -17,9 +18,9 @@ Engine_turntable : CroneEngine {
 
     // add SynthDefs
 		SynthDef("turntable", {
-			arg t_trigger, t_poll,
+			arg t_trigger,
 			prate, doloop,	stiffness, goto;
-			var playback, playhead, position, position_deci;
+			var playback, playhead, position;
 			playhead = Phasor.ar(
 				trig: t_trigger,
 				rate: prate,
@@ -35,7 +36,6 @@ Engine_turntable : CroneEngine {
 				phase: position,
 				loop: doloop;
 			);
-			Poll.kr(t_poll, position_deci, "position");
 			Out.ar(0, playback);
 		}).add;
 		
@@ -88,6 +88,13 @@ Engine_turntable : CroneEngine {
 	});
 	
 	// end commands
+	
+	// polls
+	
+	this.addPoll("get_position", {
+			var pos = position_deci;
+			pos
+	});
 	
 	} // end alloc
 	
