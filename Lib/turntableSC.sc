@@ -4,18 +4,20 @@ Engine_turntable : CroneEngine {
 	// we need to make sure the server is running before asking it to do anything
 	alloc { // allocate memory to the following:
 
-    var s = Server.default;
+		    var s = Server.default;
+    // ( server, frames, channels, bufnum )
     var b = Buffer.new(s, 0, 2, 0);
+	var turntable;
 
-		// add SynthDefs
+  	// add SynthDefs
 		SynthDef("turntable", {
 			arg bufNum = 0, out=0,
 			t_trigger, t_poll,
-			rate = 1, doloop = 1.0,	stiffness = 1.1, goto = 0;
+			prate, doloop,	stiffness, goto;
 			var playback, playhead, position, position_deci;
 			playhead = Phasor.ar(
 				trig: t_trigger,
-				rate: rate,
+				rate: prate,
 				start: 0,
 				end: BufFrames.kr(b.bufnum),
 				resetPos: goto
@@ -30,7 +32,9 @@ Engine_turntable : CroneEngine {
 			);
 			Poll.kr(t_poll, position_deci, "position");
 			Out.ar(out, playback);
-		}).play;
+		}).add;
+		
+		turntable = Synth("turntable");
 
 	Server.default.sync;
 		
@@ -38,9 +42,12 @@ Engine_turntable : CroneEngine {
 	//   to store parameter values, initialized to defaults
 	// for user control
 	params = Dictionary.newFrom([
-		\rate, 0.0,
+		\prate, 0.5,
 		\stiffness, 2,
-		\doloop, 1
+		\doloop, 1,
+		\goto, 0.0,
+		\t_poll, 0,
+		\t_trigger, 0
 		;
 	]);
 
@@ -52,14 +59,14 @@ Engine_turntable : CroneEngine {
 	// and add a command for each one, which updates corresponding value:
 	params.keysDo({ arg key;
 		this.addCommand(key, "f", { arg msg;
-			params[key] = msg[1];
+			params[key] = msg[1]
 		});
 	});
 	
 	// command to load file into buffer
 	// "fileload" will be name of Lua file parameter
 	// i.e. engine.fileload(filename,number_of_samples)
-	this.addCommand("loadfile","si", { arg msg;
+	this.addCommand("fileload","si", { arg msg;
 	    // empty buffer
 	   b.free;
 	    // post a friendly message
@@ -67,23 +74,20 @@ Engine_turntable : CroneEngine {
 	    // write to the buffer
     	b = Buffer.read(context.server,msg[1],numFrames:msg[2]);
 	    // set correct buffer number & stop turntable
-	    Synth.set(
-	        \rate, 0.0, \goto, 0.0, \t_trigger, 1
-	    )
+	    //Synth.set(
+	   //     \rate, 0.0, \goto, 0.0, \t_trigger, 1
+	   // )
 	});
 	
-	//command to poll the position
-	this.addCommand("pos_poll","f", { arg msg;
-	    Synth.set(
-	    	\t_poll,1
-	    )
-	});
+	// end commands	
+	
+	} // end alloc
+	
+	// NEW: when the script releases the engine,
+	//   free Server resources and nodes!
+	// IMPORTANT
+	free {
+		Buffer.freeAll;
+	} // end free
 
-	//command to poll the position - decimal position
-	this.addCommand("goto","f", { arg msg;
-	    Synth.set(
-	    	\goto,msg
-	    )
-	})
-	}
-}
+} // end crone
