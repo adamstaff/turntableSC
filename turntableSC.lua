@@ -558,9 +558,6 @@ function key(k, z)
         tt.destinationRate = 0
       else
         playing = true
-        softcut.play(1,1)
-        softcut.play(2,1)
-        --softcut.voice_sync(2,1,0)
         tt.destinationRate = 1
       end
     end
