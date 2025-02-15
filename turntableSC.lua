@@ -198,15 +198,18 @@ function init()
   position_poll.callback = function(val)
 		pos_handler(val)
   end
-  position_poll.time = 1/10
-  position_poll:start()
-  
-end
-
 function pos_handler(val)
   print("got a value here: "..val)
   waveform.position = val
 end
+  position_poll.time = 1/10
+  position_poll:start()
+
+
+  
+end
+
+
 
 function setFader(x)
 	local y = 0
