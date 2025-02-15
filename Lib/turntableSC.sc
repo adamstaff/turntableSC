@@ -1,18 +1,21 @@
 Engine_turntable : CroneEngine {
 
-	var params;
-	// ( server, frames, channels, bufnum )
-	var turntable; // the player variable
+	  var <params;
+    var <turntable;
+    var <tBuff;
+    
+    *new { arg context, doneCallback;
+        ^super.new(context, doneCallback);
+    }
 
 	// we need to make sure the server is running before asking it to do anything
 	alloc { // allocate memory to the following:
 
     var s = Server.local;
-    var b = Buffer.new(s, 0, 2, 0);
+    // ( server, frames, channels, bufnum )
+    tBuff = Buffer.new(context.server, 0, 2, 0);
 
-    Server.default.sync;
-
-  	// add SynthDefs
+    // add SynthDefs
 		SynthDef("turntable", {
 			arg t_trigger, t_poll,
 			prate, doloop,	stiffness, goto;
@@ -21,14 +24,14 @@ Engine_turntable : CroneEngine {
 				trig: t_trigger,
 				rate: 0.5,
 				start: 0,
-				end: BufFrames.kr(b.bufnum),
+				end: BufFrames.kr(0),
 				resetPos: goto
 			);
 			position = Lag3.ar(playhead, stiffness);
-			position_deci = position / BufFrames.kr(b.bufnum);
+			position_deci = position / BufFrames.kr(0);
 			playback = BufRd.ar(
-				numChannels: b.numChannels,
-				bufnum: b.bufnum,
+				numChannels: tBuff.numChannels,
+				bufnum: 0,
 				phase: position,
 				loop: doloop;
 			);
@@ -36,9 +39,7 @@ Engine_turntable : CroneEngine {
 			Out.ar(0, playback);
 		}).add;
 	
-	turntable = Synth("turntable");
-		
-	// let's create an Dictionary (an unordered associative collection)
+  // let's create an Dictionary (an unordered associative collection)
 	//   to store parameter values, initialized to defaults
 	// for user control
 	params = Dictionary.newFrom([
@@ -50,6 +51,8 @@ Engine_turntable : CroneEngine {
 		\t_trigger, 0
 		;
 	]);
+	
+	turntable = Synth.new("turntable");
 
 	// "Commands" are how the Lua interpreter controls the engine.
 	// The format string is analogous to an OSC message format string,
@@ -59,7 +62,9 @@ Engine_turntable : CroneEngine {
 	// and add a command for each one, which updates corresponding value:
 	params.keysDo({ arg key;
 		this.addCommand(key, "f", { arg msg;
-		  turntable.set([key], msg[1]);
+		  //postln("setting command " ++ key ++ " to " ++ msg[1]);
+		  //params[key] = msg[1];
+		  turntable.set(params[key], msg[1]);
 		});
 	});
 	
@@ -68,18 +73,18 @@ Engine_turntable : CroneEngine {
 	// i.e. engine.fileload(filename,number_of_samples)
 	this.addCommand("fileload","si", { arg msg;
 	    // empty buffer
-	   b.free;
+	   tBuff.free;
 	    // post a friendly message
 	    postln("loading "++msg[2]++" samples of "++msg[1]);
 	    // write to the buffer
-    	b = Buffer.read(context.server,msg[1],numFrames:msg[2]);
-	    // set correct buffer number & stop turntable
+    	tBuff = Buffer.read(context.server,msg[1],numFrames:msg[2]);
+	    postln("and put it in buffer number "++tBuff.bufnum);
 	    turntable.set(
-	        \rate, 0.0, \goto, 0.0, \t_trigger, 1
+	        \prate, 0.0, \goto, 0.0, \t_trigger, 1
 	    )
 	});
 	
-	// end commands	
+	// end commands
 	
 	} // end alloc
 	
@@ -88,6 +93,7 @@ Engine_turntable : CroneEngine {
 	// IMPORTANT
 	free {
 		Buffer.freeAll;
+		turntable.free;
 	} // end free
 
 } // end crone
