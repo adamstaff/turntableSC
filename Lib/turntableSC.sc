@@ -92,8 +92,8 @@ Engine_turntable : CroneEngine {
 	// polls
 	
 	this.addPoll("get_position", {
-			var pos = position_deci.getSynchronos;
-			pos
+			var pos = position_deci.getSynchronous;
+			pos;
 	});
 	
 	this.addPoll("file_loaded", func:{
