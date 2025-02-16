@@ -96,13 +96,15 @@ Engine_turntable : CroneEngine {
 			pos
 	});
 	
-	this.addPoll("fie_loaded", periodic:false, {
-		var isLoaded = false
-		if (BufFrames.kr(tBuff) > 0, {
+	this.addPoll("file_loaded", func:{
+		var isLoaded = false;
+		{if (BufFrames.kr(tBuff) > 0, {
 			isLoaded = true
-		});
-		isLoaded
-	});
+		  });
+		};
+		isLoaded;
+	  }, periodic:false;
+	);
 	
 	} // end alloc
 	

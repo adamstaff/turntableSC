@@ -198,22 +198,19 @@ function init()
   position_poll.callback = function(val)
 		pos_handler(val)
   end
-function pos_handler(val)
-  print("got a value here: "..val)
-  waveform.position = val
-end
+  function pos_handler(val)
+    print("got a value here: "..val)
+    waveform.position = val
+  end
   position_poll.time = 1/10
   position_poll:start()
 	-- file loaded
-	loaded_poll = poll.set("fie_loaded")
+	loaded_poll = poll.set("file_loaded")
 	loaded_poll.callback = function(x) 
 		waveform.isLoaded = x
 	end
 
-  
 end
-
-
 
 function setFader(x)
 	local y = 0
@@ -232,7 +229,6 @@ function setFader(x)
 	audio.level_adc(y2)
 end
 
---[[
 function load_file(file)
   if file and file ~= "cancel" then
     print('loading file '..file)
@@ -250,12 +246,12 @@ function load_file(file)
     engine.fileload(file, length)
     --read samples into waveformSamples (number of samples)
     --update param
+    waveform.isLoaded = engine.fie_loaded()
   end
   weLoading = false
   heldKeys[1] = false
   screenDirty = true
 end
---]]
 
 function drawBackground()
   screen.aa(1)
