@@ -92,7 +92,7 @@ Engine_turntable : CroneEngine {
 	// polls
 	
 	this.addPoll("get_position", {
-			var pos = position_deci;
+			var pos = position_deci.getSynchronos;
 			pos
 	});
 	
