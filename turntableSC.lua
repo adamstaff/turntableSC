@@ -440,7 +440,7 @@ function drawUI()
   --end
   screen.level(15)
   screen.move(0,60)
-  screen.text(rount(tt.playRate, 0.01))
+  screen.text(util.round(tt.playRate, 0.01))
 end
 
 
