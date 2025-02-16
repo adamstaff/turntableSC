@@ -192,7 +192,8 @@ function init()
   
   pausedHand = 15
   
-  -- poll
+  -- polls
+  -- file position
   position_poll = poll.set("get_position")
   position_poll.callback = function(val)
 		pos_handler(val)
@@ -203,7 +204,11 @@ function pos_handler(val)
 end
   position_poll.time = 1/10
   position_poll:start()
-
+	-- file loaded
+	loaded_poll = poll.set("fie_loaded")
+	loaded_poll.callback = function(x) 
+		waveform.isLoaded = x
+	end
 
   
 end
@@ -435,7 +440,7 @@ function drawUI()
   --end
   screen.level(15)
   screen.move(0,60)
-  screen.text(tt.playRate)
+  screen.text(rount(tt.playRate, 0.01))
 end
 
 
@@ -469,10 +474,10 @@ end
 function play_clock()
   while true do
     clock.sleep(1/24)
-    local get_to = tt.rateRate * tt.pitch * tt.mismatch * tt.destinationRate + tt.nudgeRate
+    local get_to = util.round(tt.rateRate * tt.pitch * tt.mismatch * tt.destinationRate + tt.nudgeRate, 0.01)
     --print("getto is "..get_to)
     local how_far = (get_to - tt.playRate) * tt.inertia
-    tt.playRate = tt.playRate + how_far / 4
+    tt.playRate = uti.round(tt.playRate + how_far / 4, 0.01)
     if tt.playRate ~= get_to then
       if tt.playRate < 0.01 and tt.playRate > -0.01 then 
         tt.playRate = 0 
