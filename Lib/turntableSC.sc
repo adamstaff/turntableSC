@@ -13,11 +13,13 @@ Engine_turntable : CroneEngine {
 	alloc { // allocate memory to the following:
 
     var s = Server.local;
+    var isLoaded = false;
+    
     // ( server, frames, channels, bufnum )
     tBuff = Buffer.new(context.server, 0, 2, 0);
 
     // add SynthDefs
-		CroneDefs.add("turntable", {
+		SynthDef("turntable", {
 			arg t_trigger,
 			prate, doloop,	stiffness, goto;
 			var playback, playhead, position;
@@ -77,14 +79,15 @@ Engine_turntable : CroneEngine {
   	this.addCommand("fileload","si", { arg msg;
       // empty buffer
       tBuff.free;
-	    // post a friendly message
-	    postln("loading "++msg[2]++" samples of "++msg[1]);
 	    // write to the buffer
     	tBuff = Buffer.read(context.server,msg[1],numFrames:msg[2]);
 	    postln("and put it in buffer number "++tBuff.bufnum);
 	    turntable.set(
 	        \prate, 0.0, \goto, 0.0, \t_trigger, 1
-	    )
+	    );
+	    // post a friendly message
+	    postln("loaded "++tBuff.numFrames++" samples of "++msg[1]);
+	    isLoaded = true;
 	  });
 	
 	  // end commands
@@ -93,15 +96,11 @@ Engine_turntable : CroneEngine {
 	
 	  this.addPoll("get_position", {
 			var pos = position_deci.getSynchronous;
-  			pos
+  		pos
 	  });
 	
 	  this.addPoll("file_loaded", {
-	    var isLoaded = false;
-	    if (BufFrames.kr(tBuff) > 0, {
-    		isLoaded = true
-	    });
-    	isLoaded;
+	    isLoaded;
 	  }, periodic:false
 	  );
 	

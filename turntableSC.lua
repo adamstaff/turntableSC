@@ -196,9 +196,6 @@ function init()
   -- file position
   position_poll = poll.set("get_position")
   position_poll.callback = function(val)
-		pos_handler(val)
-  end
-  function pos_handler(val)
     print("got a value here: "..val)
     waveform.position = val
   end
@@ -206,8 +203,9 @@ function init()
   position_poll:start()
 	-- file loaded
 	loaded_poll = poll.set("file_loaded")
-	loaded_poll.callback = function(x) 
-		waveform.isLoaded = x
+	loaded_poll.callback = function(val)
+	  print("waveformisLoaded = "..val)
+	  waveform.isLoaded = val
 	end
 	loaded_poll:start()
 
@@ -440,7 +438,6 @@ function drawUI()
   screen.text(util.round(tt.playRate, 0.01))
 end
 
-
 function redraw()
   if not weLoading then
   	if screenDirty or tt.playRate > 0.001 or tt.playRate < 0.001 then
@@ -468,13 +465,13 @@ function redraw_clock() ----- a clock that draws space
   end
 end
 
-function play_clock()
+function play_clock() ------ churning out updated playrates, and passing them to SC
   while true do
     clock.sleep(1/24)
     local get_to = util.round(tt.rateRate * tt.pitch * tt.mismatch * tt.destinationRate + tt.nudgeRate, 0.01)
     --print("getto is "..get_to)
     local how_far = (get_to - tt.playRate) * tt.inertia
-    tt.playRate = uti.round(tt.playRate + how_far / 4, 0.01)
+    tt.playRate = util.round(tt.playRate + how_far / 4, 0.01)
     if tt.playRate ~= get_to then
       if tt.playRate < 0.01 and tt.playRate > -0.01 then 
         tt.playRate = 0 
@@ -526,6 +523,7 @@ function key(k, z)
   if (k == 3 and z ==0 and heldKeys[1]) then
 	  weLoading = true
 		fileselect.enter(_path.audio,load_file)
+		loaded_poll:update()
 	end
 	
   if z == 0 then
