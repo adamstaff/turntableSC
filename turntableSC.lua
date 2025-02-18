@@ -245,7 +245,7 @@ function load_file(file)
     engine.fileload(file, length)
     --read samples into waveformSamples (number of samples)
     --update param
-    loaded_poll:update()
+
   end
   weLoading = false
   heldKeys[1] = false
