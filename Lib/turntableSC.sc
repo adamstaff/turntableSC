@@ -17,7 +17,7 @@ Engine_turntable : CroneEngine {
     tBuff = Buffer.new(context.server, 0, 2, 0);
 
     // add SynthDefs
-		SynthDef("turntable", {
+		CroneDefs.add("turntable", {
 			arg t_trigger,
 			prate, doloop,	stiffness, goto;
 			var playback, playhead, position;
@@ -92,16 +92,15 @@ Engine_turntable : CroneEngine {
 	// polls
 	
 	this.addPoll("get_position", {
-			var pos = position_deci.getSynchronous;
-			pos;
+			var pos = position_deci;
+			pos
 	});
 	
 	this.addPoll("file_loaded", func:{
 		var isLoaded = false;
-		{if (BufFrames.kr(tBuff) > 0, {
+		if (BufFrames.kr(tBuff) > 0, {
 			isLoaded = true
-		  });
-		};
+	  });
 		isLoaded;
 	  }, periodic:false;
 	);
