@@ -209,6 +209,7 @@ function init()
 	loaded_poll.callback = function(x) 
 		waveform.isLoaded = x
 	end
+	loaded_poll:start()
 
 end
 
@@ -246,7 +247,7 @@ function load_file(file)
     engine.fileload(file, length)
     --read samples into waveformSamples (number of samples)
     --update param
-    waveform.isLoaded = engine.fie_loaded()
+    loaded_poll:update()
   end
   weLoading = false
   heldKeys[1] = false
