@@ -196,7 +196,6 @@ function init()
   -- file position
   position_poll = poll.set("get_position")
   position_poll.callback = function(val)
-    print("got a value here: "..val)
     waveform.position = val
   end
   position_poll.time = 1/10
@@ -222,7 +221,7 @@ function setFader(x)
 		y = math.cos((math.pi / 2) * (x ^ params:get('faderSharpness')))
 		y2 = math.cos((math.pi / 2) * ((x - 1) ^ params:get('faderSharpness')))
 	end
-	-- turntable level (softcut)
+	-- turntable level (softcut?)
 	audio.level_cut(y)
 	-- input level
 	audio.level_adc(y2)
@@ -244,8 +243,12 @@ function load_file(file)
     --load file into buffer (file, start_source (s), start_destination (s), duration (s), preserve, mix)
     engine.fileload(file, length)
     --read samples into waveformSamples (number of samples)
+    ------ NEXT BIG TODO -----
+    ------ NEXT BIG TODO -----
+    ------ NEXT BIG TODO -----
+    ------ NEXT BIG TODO -----
     --update param
-
+    params:set("file",file,0)
   end
   weLoading = false
   heldKeys[1] = false
@@ -331,7 +334,7 @@ function drawBackground()
   -- Calculate the progress of the playback
   local progress = 0
   if waveform.isLoaded then
-    progress = (waveform.position * 1024 * waveform.zoom) / waveform.length
+    progress = waveform.position
   end
   -- Calculate the position of the tone arm tip
   local start_radius = tt.recordSize - 1
@@ -427,14 +430,13 @@ function drawUI()
   screen.move(0,6)
   screen.text(osdate)
   --time elapsed / remaining
-  --if waveform.isLoaded and #waveform.samples > 0 and waveform.rate > 0 then
-  --local remaining = util.s_to_hms(math.floor((((#waveform.samples - waveform.position) / #waveform.samples) * waveform.lengthInS)))
-    --remaining = remaining:sub(3,7)
-
-  screen.text_rotate(128,26,"-"..waveform.position, 270)
-  --end
+  if waveform.isLoaded then
+    local remaining = util.s_to_hms(math.floor(((1 - waveform.position) * waveform.lengthInS)))
+    remaining = remaining:sub(3,7)
+    screen.text_rotate(128,26,"-"..remaining, 270)
+  end
   screen.level(15)
-  screen.move(0,60)
+  screen.move(20,60)
   screen.text(util.round(tt.playRate, 0.01))
 end
 
@@ -468,16 +470,17 @@ end
 function play_clock() ------ churning out updated playrates, and passing them to SC
   while true do
     clock.sleep(1/24)
-    local get_to = util.round(tt.rateRate * tt.pitch * tt.mismatch * tt.destinationRate + tt.nudgeRate, 0.01)
+    local get_to = tt.rateRate * tt.pitch * tt.mismatch * tt.destinationRate + tt.nudgeRate
     --print("getto is "..get_to)
     local how_far = (get_to - tt.playRate) * tt.inertia
-    tt.playRate = util.round(tt.playRate + how_far / 4, 0.01)
+    tt.playRate = tt.playRate + how_far / 4
     if tt.playRate ~= get_to then
       if tt.playRate < 0.01 and tt.playRate > -0.01 then 
         tt.playRate = 0 
       else
-		    engine.prate(tt.playRate)
+		    
       end
+      engine.prate(tt.playRate)
     end
   end
 end

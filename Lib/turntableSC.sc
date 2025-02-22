@@ -20,7 +20,7 @@ Engine_turntable : CroneEngine {
 
     // add SynthDefs
 		SynthDef("turntable", {
-			arg t_trigger, prate, doloop, stiffness, goto;
+			arg t_trigger, prate, doloop, stiffness, skipto;
 			var playback, playhead, position = 0, position_deci;
 			// playhead
 			playhead = Phasor.ar(
@@ -28,7 +28,7 @@ Engine_turntable : CroneEngine {
 				rate: prate,
 				start: 0,
 				end: BufFrames.kr(0),
-				resetPos: goto
+				resetPos: skipto;
 			);
 			//  playhead position
 			position = Lag3.ar(playhead, stiffness);
@@ -52,10 +52,9 @@ Engine_turntable : CroneEngine {
   	// for user control
 	  params = Dictionary.newFrom([
   		\prate, 0.5,
-  		\stiffness, 0.5,
+  		\stiffness, 0.0,
   		\doloop, 1,
-  		\goto, 0.0,
-  		\t_poll, 0,
+  		\skipto, 0.0,
   		\t_trigger, 0
   		;
   	]);
