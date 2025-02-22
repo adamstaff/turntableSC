@@ -1,9 +1,9 @@
 Engine_turntable : CroneEngine {
 
 	  var params;
-    var turntable;
-    var tBuff;
-    var position_deci;
+	  var turntable;
+	  var tBuff;
+	  var <posOut;
     
     *new { arg context, doneCallback;
         ^super.new(context, doneCallback);
@@ -14,15 +14,16 @@ Engine_turntable : CroneEngine {
 
     var s = Server.local;
     var isLoaded = false;
-    
+
     // ( server, frames, channels, bufnum )
     tBuff = Buffer.new(context.server, 0, 2, 0);
+    posOut = Bus.control(s,1);
 
     // add SynthDefs
 		SynthDef("turntable", {
-			arg t_trigger,
-			prate, doloop,	stiffness, goto;
-			var playback, playhead, position;
+			arg t_trigger, prate, doloop, stiffness, goto, posBus;
+			var playback, playhead, position = 0, position_deci = 0;
+			// playhead
 			playhead = Phasor.ar(
 				trig: t_trigger,
 				rate: prate,
@@ -30,8 +31,10 @@ Engine_turntable : CroneEngine {
 				end: BufFrames.kr(0),
 				resetPos: goto
 			);
+			//  playhead position
 			position = Lag3.ar(playhead, stiffness);
 			position_deci = position / BufFrames.kr(0);
+			//  playback engine
 			playback = BufRd.ar(
 				numChannels: tBuff.numChannels,
 				bufnum: 0,
@@ -39,10 +42,11 @@ Engine_turntable : CroneEngine {
 				loop: doloop;
 			);
 			Out.ar(0, playback);
+			Out.kr(posBus, position_deci);
 		}).add;
 		
 		
-		Server.default.sync;
+		s.sync;
 	
     // let's create an Dictionary (an unordered associative collection)
   	//   to store parameter values, initialized to defaults
@@ -57,7 +61,7 @@ Engine_turntable : CroneEngine {
   		;
   	]);
 	
-  	turntable = Synth("turntable", target:context.xg);
+  	turntable = Synth("turntable", target:context.xg, posBus: posOut.index);
 
   	// "Commands" are how the Lua interpreter controls the engine. FROM LUA TO SC
   	// The format string is analogous to an OSC message format string,
@@ -95,10 +99,10 @@ Engine_turntable : CroneEngine {
 	  // polls FROM SC TO LUA
 	
 	  this.addPoll("get_position", {
-			var pos = position_deci.getSynchronous;
-  		pos
+			var pos = turntable.posOut.getSynchronous;
+			pos;
 	  });
-	
+
 	  this.addPoll("file_loaded", {
 	    isLoaded;
 	  }, periodic:false
@@ -112,6 +116,7 @@ Engine_turntable : CroneEngine {
 	free {
 		Buffer.freeAll;
 		turntable.free;
+		posOut.free;
 	} // end free
 
 } // end crone
