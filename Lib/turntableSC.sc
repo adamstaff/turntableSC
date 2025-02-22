@@ -21,7 +21,7 @@ Engine_turntable : CroneEngine {
     // add SynthDefs
 		SynthDef("turntable", {
 			arg t_trigger, prate, doloop, stiffness, goto;
-			var playback, playhead, position = 0;
+			var playback, playhead, position = 0, position_deci;
 			// playhead
 			playhead = Phasor.ar(
 				trig: t_trigger,
@@ -60,7 +60,7 @@ Engine_turntable : CroneEngine {
   		;
   	]);
 	
-  	turntable = Synth("turntable", target:context.xg, posBus: posOut[0].index);
+  	turntable = Synth("turntable", target:context.xg);
 
   	// "Commands" are how the Lua interpreter controls the engine. FROM LUA TO SC
   	// The format string is analogous to an OSC message format string,
@@ -114,7 +114,7 @@ Engine_turntable : CroneEngine {
 	free {
 		Buffer.freeAll;
 		turntable.free;
-		position_deci.free;
+		posBus.free;
 	} // end free
 
 } // end crone
