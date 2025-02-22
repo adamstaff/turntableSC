@@ -3,7 +3,7 @@ Engine_turntable : CroneEngine {
 	  var params;
 	  var turntable;
 	  var tBuff;
-	  var <posOut;
+	  var <posBus;
     
     *new { arg context, doneCallback;
         ^super.new(context, doneCallback);
@@ -12,17 +12,16 @@ Engine_turntable : CroneEngine {
 	// we need to make sure the server is running before asking it to do anything
 	alloc { // allocate memory to the following:
 
-    var s = Server.local;
+    var s = Server.default;
     var isLoaded = false;
-
     // ( server, frames, channels, bufnum )
     tBuff = Buffer.new(context.server, 0, 2, 0);
-    posOut = Bus.control(s,1);
+    posBus = Bus.control(context.server);
 
     // add SynthDefs
 		SynthDef("turntable", {
-			arg t_trigger, prate, doloop, stiffness, goto, posBus;
-			var playback, playhead, position = 0, position_deci = 0;
+			arg t_trigger, prate, doloop, stiffness, goto;
+			var playback, playhead, position = 0;
 			// playhead
 			playhead = Phasor.ar(
 				trig: t_trigger,
@@ -42,10 +41,10 @@ Engine_turntable : CroneEngine {
 				loop: doloop;
 			);
 			Out.ar(0, playback);
-			Out.kr(posBus, position_deci);
+			Out.kr(posBus.index, position_deci)
 		}).add;
 		
-		
+		// done and sync
 		s.sync;
 	
     // let's create an Dictionary (an unordered associative collection)
@@ -61,7 +60,7 @@ Engine_turntable : CroneEngine {
   		;
   	]);
 	
-  	turntable = Synth("turntable", target:context.xg, posBus: posOut.index);
+  	turntable = Synth("turntable", target:context.xg, posBus: posOut[0].index);
 
   	// "Commands" are how the Lua interpreter controls the engine. FROM LUA TO SC
   	// The format string is analogous to an OSC message format string,
@@ -97,9 +96,8 @@ Engine_turntable : CroneEngine {
 	  // end commands
 	
 	  // polls FROM SC TO LUA
-	
 	  this.addPoll("get_position", {
-			var pos = turntable.posOut.getSynchronous;
+			var pos = posBus.getSynchronous;
 			pos;
 	  });
 
@@ -116,7 +114,7 @@ Engine_turntable : CroneEngine {
 	free {
 		Buffer.freeAll;
 		turntable.free;
-		posOut.free;
+		position_deci.free;
 	} // end free
 
 } // end crone
