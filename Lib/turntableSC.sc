@@ -20,7 +20,7 @@ Engine_turntable : CroneEngine {
 
     // add SynthDefs
 		SynthDef("turntable", {
-			arg t_trigger, prate, doloop, stiffness, skipto,
+			arg t_trigger, prate, stiffness, skipto,
 			noise_level, tnoise, tdust, trumble, tmotor;
 			
 			var playrate = Lag3.kr(prate, stiffness);
@@ -34,13 +34,13 @@ Engine_turntable : CroneEngine {
 			);
 			//  playhead position
 			var position = playhead;
-			var position_deci = position / BufFrames.kr(0);
+			var position_deci = position / BufFrames.kr(tBuff);
 			//  playback engine
 			var playback = BufRd.ar(
 				numChannels: tBuff.numChannels,
 				bufnum: 0,
 				phase: playhead,
-				loop: doloop;
+				interpolation: 4;
 			);
 	    // noise stuff
 	    var dtrig = Dust.ar(5);
@@ -62,7 +62,6 @@ Engine_turntable : CroneEngine {
 	  params = Dictionary.newFrom([
   		\prate, 0.0,
   		\stiffness, 1,
-  		\doloop, 1,
   		\skipto, 0.0,
   		\t_trigger, 0,
   		\tnoise, 0.35,

@@ -77,9 +77,7 @@ function init_params()
   params:set_action('dust', function(x) engine.tdust(x/100) end)
   params:add_binary('loop', 'Loop', 'toggle', 0)
   params:set_action('loop', function(x)
-    for i = 1, 2, 1 do
-      softcut.loop(i,x)
-    end
+    engine.doloop(x)
   end)
   params:add_binary('warningOn', 'Warning Timer', 'toggle', 1)
   params:add_number('warning', "Warning Length", 1, 60, 10)
@@ -224,6 +222,19 @@ function init()
   engine.doloop(1)
   engine.skipto(0.0)
 
+end
+
+function stopper()
+  if waveform.position > 0.99 or waveform.position < 0 then
+    print("hit end of file")
+    tt.destinationRate = 0
+    tt.playRate = 0
+    tt.nudgeRate = 0
+    engine.stiffness(0)
+    engine.prate(0)
+    engine.t_trigger(1)
+    playing = false
+	end
 end
 
 function setFader(x)
@@ -492,6 +503,9 @@ function play_clock() ------ churning out updated playrates, and passing them to
     end
     --print("setting rate to "..tt.playRate)
     engine.prate(tt.playRate)
+    if params:get("loop") == 0 then
+      stopper()
+    end
   end
 end
 
@@ -577,8 +591,9 @@ function key(k, z)
   end
   
   if heldKeys[2] and heldKeys[3] then --wheeeell upp
-    tt.playRate = -40
-    engine.stiffness(1.0)
+    engine.stiffness(0.1)
+    engine.prate(-400)
+    engine.stiffness(2)
   end
   
   screenDirty = true
