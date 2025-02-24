@@ -1,5 +1,5 @@
 -- 
---         turntable v2.1.1
+--         turntable v3.0
 --         By Adam Staff
 --
 --
@@ -65,6 +65,16 @@ function init_params()
   params:add_number('pitchSpeed', 'Pitch', -8, 8, 0)
   params:set_action('pitchSpeed', function(x) tt.pitch = 2^(x/12) end)
   params:add_number('drive', 'Turntable Drive', 1, 16, 4)
+  params:add_number('noise', 'Turntable Noise', 0, 200, 50)
+  params:set_action('noise', function(x) 
+    x = x/100
+    engine.tnoise(0.07 * x)
+    engine.tdust(10 * x)
+    engine.trumble(5 * x)
+    engine.tmotor(3 * x)
+  end)
+  params:add_number('dust', 'Turntable Dust', 0, 200, 50)
+  params:set_action('dust', function(x) engine.tdust(x/100) end)
   params:add_binary('loop', 'Loop', 'toggle', 0)
   params:set_action('loop', function(x)
     for i = 1, 2, 1 do
@@ -86,13 +96,13 @@ function init_params()
   --crow controls
   params:add_separator('crow')
   params:add_option('crowmode', 'mode', crowModes, 1)
-  params:set_action('crowmode', function(x)
-    if x == 1 then 
+  params:set_action('crowmode', function(mode)
+    if mode == 1 then 
         crow.input[1].mode("change", 1.0, 0.1, "both")
         crow.input[1].change = crow_playstop
         crow.input[2].stream = crow_rate 
     end
-    if x == 2 then 
+    if mode == 2 then 
       crow.input[1].mode("stream", 0.1)
       crow.input[1].stream = crow_rate
       crow.input[2].stream = crow_pos 
@@ -207,6 +217,12 @@ function init()
 	  waveform.isLoaded = val
 	end
 	loaded_poll:start()
+	
+	-- engine init
+	engine.prate(0)
+	engine.stiffness(1)
+  engine.doloop(1)
+  engine.skipto(0.0)
 
 end
 
@@ -470,18 +486,12 @@ end
 function play_clock() ------ churning out updated playrates, and passing them to SC
   while true do
     clock.sleep(1/24)
-    local get_to = tt.rateRate * tt.pitch * tt.mismatch * tt.destinationRate + tt.nudgeRate
-    --print("getto is "..get_to)
-    local how_far = (get_to - tt.playRate) * tt.inertia
-    tt.playRate = tt.playRate + how_far / 4
-    if tt.playRate ~= get_to then
-      if tt.playRate < 0.01 and tt.playRate > -0.01 then 
-        tt.playRate = 0 
-      else
-		    
-      end
-      engine.prate(tt.playRate)
+    tt.playRate = tt.rateRate * tt.pitch * tt.mismatch * tt.destinationRate + tt.nudgeRate
+    if tt.playRate < 0.01 and tt.playRate > -0.01 then 
+      tt.playRate = 0
     end
+    --print("setting rate to "..tt.playRate)
+    engine.prate(tt.playRate)
   end
 end
 
@@ -540,17 +550,17 @@ function key(k, z)
   end
   
   if k == 2 and not heldKeys[1] and z == 1 then
-      paused = true
-      if playing then 
-        tt.destinationRate = 0
-        tt.inertia = 0.7
-      end
+    paused = true
+    if playing then 
+      tt.destinationRate = 0
+      engine.stiffness(0.25)
+    end
   end
   if k == 2 and z == 0 then
     paused = false
     if playing then
       tt.destinationRate = 1
-      tt.inertia = 0.3
+      engine.stiffness(1.0)
     end
   end
   
@@ -568,7 +578,7 @@ function key(k, z)
   
   if heldKeys[2] and heldKeys[3] then --wheeeell upp
     tt.playRate = -40
-    tt.inertia = 0.1
+    engine.stiffness(1.0)
   end
   
   screenDirty = true

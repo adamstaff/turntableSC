@@ -21,58 +21,59 @@ Engine_turntable : CroneEngine {
     // add SynthDefs
 		SynthDef("turntable", {
 			arg t_trigger, prate, doloop, stiffness, skipto,
-			noise_level = 0.5, t_noise = 0.35, t_dust = 1.0, t_rumble = 0.9, t_motor = 0.5;
-			var withnoise, playback, playhead, position, position_deci,
-			v_noise, v_dust, v_rumble, v_motor, v_mix;
+			noise_level, tnoise, tdust, trumble, tmotor;
+			
+			var playrate = Lag3.kr(prate, stiffness);
 			// playhead
-			playhead = Phasor.ar(
+			var playhead = Phasor.ar(
 				trig: t_trigger,
-				rate: prate,
+				rate: playrate,
 				start: 0,
 				end: BufFrames.kr(0),
 				resetPos: skipto;
 			);
 			//  playhead position
-			position = Lag3.ar(playhead, stiffness);
-			position_deci = position / BufFrames.kr(0);
+			var position = playhead;
+			var position_deci = position / BufFrames.kr(0);
 			//  playback engine
-			playback = BufRd.ar(
+			var playback = BufRd.ar(
 				numChannels: tBuff.numChannels,
 				bufnum: 0,
-				phase: position,
+				phase: playhead,
 				loop: doloop;
 			);
-			// noise stuff
-		  v_noise = BHiPass.ar(Crackle.ar([2,2],[t_noise,t_noise]), 8000, 8);
-			v_dust = BBandPass.ar(Dust2.ar([0.7,0.7],[t_dust,t_dust]), 800, 5);
-			v_rumble = BBandPass.ar(WhiteNoise.ar([t_rumble,t_rumble]), [13.5,13.5], 1);
-			v_motor = BBandPass.ar(WhiteNoise.ar(), 100, 0.1, t_motor) + BBandPass.ar(WhiteNoise.ar(), 150, 0.1, t_motor * 0.5);
-			v_mix = v_noise + v_dust + v_rumble + v_motor;
-			withnoise = playback + (v_mix * noise_level);
+	    // noise stuff
+	    var dtrig = Dust.ar(5);
+	    var v_noise = BBandPass.ar(PinkNoise.ar([tnoise,tnoise]), 10000, 5);
+	    var v_dust = Pan2.ar(BBandPass.ar(BBandPass.ar(Dust2.ar(10,2), TRand.ar(170, 3370, dtrig), 3), 5370,0.4) * EnvGen.ar(Env.perc(0.05, 0.05), dtrig), TRand.ar(-1, 1, dtrig));
+	    var v_rumble = BBandPass.ar(PinkNoise.ar([trumble,trumble]), [13.5,13.5], 1);
+	    var v_motor = BBandPass.ar(WhiteNoise.ar(), 100, 0.1, tmotor) + BBandPass.ar(WhiteNoise.ar(), 150, 0.1, tmotor * 0.5);
+	    var v_mix = (v_noise + v_dust + v_rumble + v_motor) * playrate;
+			var withnoise = playback + v_mix;
 
 			Out.ar(0, withnoise);
+			// bus output for poll
 			Out.kr(posBus.index, position_deci)
 		}).add;
-		
-		// done and sync
-		s.sync;
-	
-    // let's create an Dictionary (an unordered associative collection)
+
+		// let's create an Dictionary (an unordered associative collection)
   	//   to store parameter values, initialized to defaults
   	// for user control
 	  params = Dictionary.newFrom([
-  		\prate, 0.5,
-  		\stiffness, 0.0,
+  		\prate, 0.0,
+  		\stiffness, 1,
   		\doloop, 1,
   		\skipto, 0.0,
   		\t_trigger, 0,
-  		\noise_level, 0.5,
-  		\t_noise, 0.35, 
-  		\t_dust, 1.0, 
-  		\t_rumble, 0.9, 
-  		\t_motor, 0.5
+  		\tnoise, 0.35,
+  		\tdust, 1.0, 
+  		\trumble, 0.9,
+  		\tmotor, 0.5
   		;
   	]);
+		
+		// done and sync
+		s.sync;
 	
   	turntable = Synth("turntable", target:context.xg);
 
