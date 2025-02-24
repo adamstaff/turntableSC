@@ -20,8 +20,10 @@ Engine_turntable : CroneEngine {
 
     // add SynthDefs
 		SynthDef("turntable", {
-			arg t_trigger, prate, doloop, stiffness, skipto;
-			var playback, playhead, position = 0, position_deci;
+			arg t_trigger, prate, doloop, stiffness, skipto,
+			noise_level = 0.5, t_noise = 0.35, t_dust = 1.0, t_rumble = 0.9, t_motor = 0.5;
+			var withnoise, playback, playhead, position, position_deci,
+			v_noise, v_dust, v_rumble, v_motor, v_mix;
 			// playhead
 			playhead = Phasor.ar(
 				trig: t_trigger,
@@ -40,19 +42,16 @@ Engine_turntable : CroneEngine {
 				phase: position,
 				loop: doloop;
 			);
-			Out.ar(0, playback);
-			Out.kr(posBus.index, position_deci)
-		}).add;
+			// noise stuff
+		  v_noise = BHiPass.ar(Crackle.ar([2,2],[t_noise,t_noise]), 8000, 8);
+			v_dust = BBandPass.ar(Dust2.ar([0.7,0.7],[t_dust,t_dust]), 800, 5);
+			v_rumble = BBandPass.ar(WhiteNoise.ar([t_rumble,t_rumble]), [13.5,13.5], 1);
+			v_motor = BBandPass.ar(WhiteNoise.ar(), 100, 0.1, t_motor) + BBandPass.ar(WhiteNoise.ar(), 150, 0.1, t_motor * 0.5);
+			v_mix = v_noise + v_dust + v_rumble + v_motor;
+			withnoise = playback + (v_mix * noise_level);
 
-		SynthDef(\dust, { arg out=0, noise = 0.35, dust = 1.0, rumble = 0.9, level = 1, motor = 0.5;
-			var v_noise = BHiPass.ar(Crackle.ar([2,2],[noise,noise]), 8000, 8);
-			var v_dust = BBandPass.ar(Dust2.ar([0.7,0.7],[dust,dust]), 800, 5);
-			var v_rumble = BBandPass.ar(WhiteNoise.ar([rumble,rumble]), [13.5,13.5], 1);
-			var v_motor = BBandPass.ar(WhiteNoise.ar(), 100, 0.1, motor) + BBandPass.ar(WhiteNoise.ar(), 150, 0.1, motor * 0.5);
-		
-			var v_mix = v_noise + v_dust + v_rumble + v_motor;
-		
-			Out.ar(out, v_mix * level)
+			Out.ar(0, withnoise);
+			Out.kr(posBus.index, position_deci)
 		}).add;
 		
 		// done and sync
@@ -66,13 +65,16 @@ Engine_turntable : CroneEngine {
   		\stiffness, 0.0,
   		\doloop, 1,
   		\skipto, 0.0,
-  		\t_trigger, 0
+  		\t_trigger, 0,
+  		\noise_level, 0.5,
+  		\t_noise, 0.35, 
+  		\t_dust, 1.0, 
+  		\t_rumble, 0.9, 
+  		\t_motor, 0.5
   		;
   	]);
 	
   	turntable = Synth("turntable", target:context.xg);
-	-- add vinyl sound?
-	dust = Synth("dust", target:context.xg);
 
   	// "Commands" are how the Lua interpreter controls the engine. FROM LUA TO SC
   	// The format string is analogous to an OSC message format string,
